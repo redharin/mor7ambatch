@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="delete-customerFlow" doc:id="20678498-62d1-416f-9e94-fe4cd6e515e8" >
+		<set-variable value="#[attributes.queryParams.customerId]" doc:name="Set Variable" doc:id="49cd9379-caf3-4db5-8ab4-8c2d401541b6" variableName="cusid"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4972c822-1a42-4f9a-b4d1-92961d352cdb" message="Sending the request to database"/>
+		<db:delete doc:name="Delete" doc:id="a7121ea2-4e7b-459a-92c1-16d40b590044" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM customer_tbl WHERE id = :customerId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	customerId : vars.cusid
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="ff4b5e0b-1ad5-458d-817a-439e801b76ae" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Customer deleted successfully"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

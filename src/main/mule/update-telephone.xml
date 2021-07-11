@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="update-telephoneFlow" doc:id="c3438ce7-e995-4e4e-8b7b-cc90fcfff23d" >
+		<logger level="INFO" doc:name="Logger" doc:id="3914ee7c-fc22-434c-941f-7d4f52f7c893" />
+		<db:update doc:name="Update" doc:id="e71c03b0-96f0-4048-b908-a213bff5cb4f" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE customer_tbl SET telephone = :custel WHERE id = :cusid]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	custel : payload.telephone,
+	cusid : payload.id
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="74bee354-1088-4031-9709-35b00ac750ca" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Customer telephone number updated"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="3af26003-6486-46a2-91f3-355e62abb305" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+'{ "message": "Error occured while calling Bluestar", "Error" : ' ++ (error.description() default "") ++ '}']]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

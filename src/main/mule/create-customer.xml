@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="create-customerFlow" doc:id="5a66789c-a1ba-4eeb-b7bc-6393092da60a" >
+		<logger level="INFO" doc:name="Logger" doc:id="cd65cf31-5ad3-42fd-bf08-8627751d1d12" message="Request sending to database"/>
+		<db:insert doc:name="Insert" doc:id="d1efd2c0-617c-487b-a736-50329b557661" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO customer_tbl (name,email,telephone,address) VALUES (:cusname,:cusemail,:custel,:cusaddr)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	cusname : payload.name,
+	cusemail : payload.email,
+	custel : payload.telephone,
+	cusaddr : payload.address
+	
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="f9a1220f-a7a1-4b6e-8706-319179320d97" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Successfully saved customer data"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

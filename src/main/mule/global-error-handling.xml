@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="global-error-handlingError_Handler" doc:id="069d60e6-e8ed-4b9b-a515-0e1317dec55a" >
+			
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b1823aa6-af43-4b99-a1b7-9e6b45542470" type="DB:BAD_SQL_SYNTAX">
+				<ee:transform doc:name="Transform Message" doc:id="bd50d351-d9bb-4296-9258-3f93cb4b12ba" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Please check the query before executing the request"]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[405]]></ee:set-variable>
+						<ee:set-variable variableName="httpMessage" ><![CDATA["Bad Syntax"]]></ee:set-variable>
+						<ee:set-variable variableName="finalid" ><![CDATA[10]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cc2858c6-23ab-4109-b9dc-91f589fe2cea" type="DB:RETRY_EXHAUSTED">
+				<ee:transform doc:name="Transform Message" doc:id="21f6d648-a2de-4b4c-9e27-4be6bffab16f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Maximum database retired, connection issue"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ee00b3b2-e227-4dce-85c3-d1432a5487e6" type="DB:QUERY_EXECUTION">
+				<ee:transform doc:name="Transform Message" doc:id="43971162-be51-4d44-acb3-4b21e22f157e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"There is an issue while executing the query, check the query"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		
+	
+</error-handler>
+	<error-handler name="global-error-handlingError_Handler1" doc:id="d298b513-8bde-4727-b751-63fa261ec559" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="dbfc874d-e55e-4393-abdb-2b086424417c" type="ANY">
+			<logger level="INFO" doc:name="Logger" doc:id="0323286d-0946-4a1d-ba36-fbbc47c7f165" message="Error Received"/>
+		</on-error-propagate>
+	</error-handler>
+	
+
+</mule>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+    <http:listener-config name="curd-customer-2-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="curd-customer-2-config" api="resource::d39d2794-0f2a-48ee-9f87-e53492958294:curd-customer:1.0.0:raml:zip:curd-customer.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <db:config name="Database_Config" doc:name="Database Config" doc:id="cea6d322-5da9-4621-a205-487b90c964d9">
+        <db:my-sql-connection host="${db.host}" port="${db.port}" user="${secure::db.user}" password="${secure::db.password}" database="${db.database}" />
+    </db:config>
+    <configuration doc:name="Configuration" doc:id="f6999b24-d6e5-42c5-8154-8369c343b799" defaultErrorHandler-ref="global-error-handlingError_Handler" />
+    <configuration-properties doc:name="Configuration properties" doc:id="a20f1a99-4ee5-4b10-8be8-8f0418a02128" file="${env}.properties" />
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="a533c64f-90bf-4af4-ac3b-fceb2b6b7675" file="${env}.secure.properties" key="${key}">
+        <secure-properties:encrypt algorithm="Blowfish" />
+    </secure-properties:config>
+    <ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="d8ec021d-3ad1-4dcf-ba65-f7c71e3fa332" keyGenerationExpression="#[attributes.queryParams.customerId]" />
+	<flow name="curd-customer-2-main">
+        <http:listener config-ref="curd-customer-2-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="curd-customer-2-config" />
+    </flow>
+    <flow name="delete:\removecustomer:curd-customer-2-config">
+        <flow-ref doc:name="deleteCustomerFlow" doc:id="ee0d7fac-6c77-4fda-a85e-a4187b5d04e3" name="delete-customerFlow" />
+    </flow>
+    <flow name="patch:\updatecustomertel:application\json:curd-customer-2-config">
+        <flow-ref doc:name="Update Telephone" doc:id="cbcf6f07-10fc-4f7e-913e-edb8b0474f13" name="update-telephoneFlow" />
+    </flow>
+    <flow name="get:\getallcustomers:curd-customer-2-config">
+        <flow-ref doc:name="Flow Reference" doc:id="e0e7b0b2-a731-41f5-b55d-d421cdff1b37" name="get-all-customersFlow1" />
+    </flow>
+    <flow name="get:\getcustomerbyId:curd-customer-2-config">
+        <flow-ref doc:name="get-customer-byidSub_Flow" doc:id="68f79033-ee99-4460-92f5-b98846524274" name="get-customer-byidSub_Flow" />
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f45b0b34-ccfe-4339-861b-3e206d556211" type="CE:VARIABLE_EMPTY">
+                <ee:transform doc:name="Transform Message" doc:id="0ee43053-9360-44d5-85c3-3e2a35888bb9">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message" : "Query parameter should not be blank, please provide query parameter and try"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\createcustomer:application\json:curd-customer-2-config">
+        <flow-ref doc:name="Create Customer flow" doc:id="60497340-a8fa-4387-aa31-64a800febfed" name="create-customerFlow" />
+    </flow>
+</mule>

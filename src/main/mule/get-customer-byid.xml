@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="get-customer-byidSub_Flow" doc:id="a704dc3f-39d8-4d5c-a727-a5b23adcd28a" >
+		<set-variable value="#[attributes.queryParams.customerId]" doc:name="Copy_of_Set Variable" doc:id="f0b6391f-b559-4878-a6c1-a2047eb60de0" variableName="cusId" />
+		<choice doc:name="Choice" doc:id="3f9a06ac-634e-4047-8ef7-73da440f4432" >
+			<when expression="#[isEmpty(vars.cusId)]">
+				<raise-error doc:name="Raise error" doc:id="b4fcc5a2-4963-4560-a68f-ca1117940f35" type="CE:VARIABLE_EMPTY"/>
+			</when>
+		</choice>
+		<try doc:name="Try" doc:id="8106bbc5-950a-4815-9e89-3a5057f95fe7" >
+			<ee:cache doc:name="Cache" doc:id="1880eaf9-6a9f-4d11-ac28-22a7069a2513">
+				<db:select doc:name="Copy_of_Select" doc:id="e881f6bd-1f35-414c-b7ed-c371bc5861c6" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from customer_tbl where id = :customerid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	customerid : vars.cusId
+}]]]></db:input-parameters>
+		</db:select>
+			</ee:cache>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="45a41bcd-e138-4746-9da1-ee2292efa213" type="DB:CONNECTIVITY">
+					<ee:transform doc:name="Transform Message" doc:id="080a8b74-a187-43a7-9036-410e87f5344d" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Error due to database connectivity"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<choice doc:name="Choice" doc:id="bbf5469c-bd02-469b-8cae-c6a4ed6ce38b" >
+			<when expression="#[payload[0].name == p('name.reject')]">
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="c3bc576b-19f5-428e-9256-1df07ce9d74c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message" : "Customer is Pradeep, hence skipped"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>			
+			<when expression="#[sizeOf(payload) &gt;0]">
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="73a3eb0d-1dd9-4c20-82bc-d0665a204a0d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	envronment : p('envronment'),
+	id : payload[0].id,
+	name : payload[0].name,
+	email : payload[0].email,
+	telephone : payload[0].telephone,
+	address : payload[0].address
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="4e87aada-dc36-4ef1-b81e-03b011a8ff6c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message" : "For the given customerId, there is no data exists"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="93c05f06-7d3f-47e5-bc65-8e6ba6e9dfc3" />
+	</sub-flow>
+</mule>
